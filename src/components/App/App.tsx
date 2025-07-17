@@ -1,85 +1,89 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import styles from "./App.module.css";
+import ReactPaginate from "react-paginate";
 import fetchMovies from "../../services/movieService";
-// import type { Movie } from "../../types/movie";
+import type { Movie } from "../../types/movie";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
 import toast, { Toaster } from "react-hot-toast";
 
 import SearchBar from "../SearchBar/SearchBar";
-// import MovieModal from "../MovieModal/MovieModal";
+import MovieModal from "../MovieModal/MovieModal";
 import MovieGrid from "../MovieGrid/MovieGrid";
 import Loader from "../Loader/Loader";
 
 export default function App() {
   const [movies, setMovies] = useState("");
-  // const [isModalOpen, setIsModalOpen] = useState(false);
-  // const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
-  // const [count, setCount] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["movie", movies],
-    queryFn: () => fetchMovies(movies),
+    queryKey: ["movie", movies, currentPage],
+    queryFn: () => fetchMovies(movies, currentPage),
     enabled: movies !== "",
-    // placeholderData: keepPreviousData,
   });
 
-  function setIsNotFind() {
-    toast.error("No movies found for your request.");
-    return;
-  }
+  useEffect(() => {
+    if (!isLoading && data && data.results.length === 0) {
+      toast.error("No movies found for your request.");
+    }
+  }, [data, isLoading]);
 
   const handleSearch = (newMovie: string) => {
-    setMovies(newMovie);
-    if (newMovie.length === 0) {
-      setIsNotFind();
+    if (!newMovie.trim()) {
+      toast.error("Please enter your search query.");
+      return;
     }
+    setMovies(newMovie);
+    setCurrentPage(1);
   };
-  // const openModal = (movie: Movie) => {
-  //   setSelectedMovie(movie);
-  //   setIsModalOpen(true);
-  // };
 
-  // const closeModal = () => setIsModalOpen(false);
+  const totalPages = data?.total_pages || 0;
 
-  // const handleSearch = async (value: string) => {
-  //   setMovies([]);
-  // setIsLoading(true);
-  // setIsError(false);
+  const openModal = (movie: Movie) => {
+    setSelectedMovie(movie);
+    setIsModalOpen(true);
+  };
 
-  // try {
-  //   const newMovie = await fetchMovies(value);
-  //   setMovies(newMovie.results);
-
-  //
-  // } catch {
-  //   setIsError(true);
-  // } finally {
-  //   setIsLoading(false);
-  // }
+  const closeModal = () => setIsModalOpen(false);
+  const hasMovie = data && data.results.length > 0;
 
   return (
     <div className={styles.app}>
-      {/* 
+      {isModalOpen && selectedMovie && (
+        <MovieModal movie={selectedMovie} onClose={closeModal} />
+      )}
 
-      
-      {movies.length > 0 && (
+      <SearchBar onSubmit={handleSearch} />
+
+      {isLoading && <Loader />}
+      {hasMovie && (
+        <ReactPaginate
+          pageCount={totalPages}
+          pageRangeDisplayed={5}
+          marginPagesDisplayed={1}
+          onPageChange={({ selected }) => setCurrentPage(selected + 1)}
+          forcePage={currentPage - 1}
+          containerClassName={styles.pagination}
+          activeClassName={styles.active}
+          nextLabel="→"
+          previousLabel="←"
+        />
+      )}
+
+      {hasMovie && (
         <MovieGrid
-          movies={data}
+          movies={data.results}
           onSelect={(movie) => {
             openModal(movie);
-            setCount((count) => count + 1);
           }}
         />
       )}
-      {isModalOpen && selectedMovie && (
-        <MovieModal movie={selectedMovie} onClose={closeModal} />
-      )} */}
-      {isLoading && <Loader />}
+
       {isError && <ErrorMessage />}
       <Toaster />
-      <SearchBar onSubmit={handleSearch} />
-      {data && data.results.length > 0 && <MovieGrid movies={data.results} />}
     </div>
   );
 }

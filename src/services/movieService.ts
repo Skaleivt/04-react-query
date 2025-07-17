@@ -10,8 +10,8 @@ interface MovieSearchResponse {
 }
 
 export default async function fetchMovies(
-  topic: string
-  // page: number
+  topic: string,
+  page: number
 ): Promise<MovieSearchResponse> {
   const myKey = import.meta.env.VITE_API_KEY;
   axios.defaults.baseURL = "https://api.themoviedb.org/3";
@@ -22,7 +22,7 @@ export default async function fetchMovies(
     },
     params: {
       query: topic,
-      // page,
+      page,
     },
   });
   return response.data;
