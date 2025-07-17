@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import styles from "./App.module.css";
 import ReactPaginate from "react-paginate";
-import fetchMovies from "../../api/movieService";
+import fetchMovies from "../../services/movieService";
 import type { Movie } from "../../types/movie";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
 import toast, { Toaster } from "react-hot-toast";
